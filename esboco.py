@@ -1,6 +1,7 @@
 import os
+import creds
 
-diretorio = "C:\\Users\\Arthur\\Desktop\\Códigos\\Ideias\\Automação de relatórios\\Simulation\\"
+diretorio = creds.user_path
 listaPastas = []
 listaArquivos = []
 
