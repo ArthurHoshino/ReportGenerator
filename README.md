@@ -1,8 +1,8 @@
 # Report Generator (kind of)
 ### Code to help a lazy friend create his reports
 
-This code runs through files that are inside pastes which are inside another paste
-and separate the titles into three categories based on the first character of the title: </br>
+This code goes through files that are inside folders that are inside another folder 
+and separates the titles into three categories based on the first character of the title: </br>
 1 -> positive reports </br>
 2 -> negative reports </br>
 3 -> neutral reports </br>
