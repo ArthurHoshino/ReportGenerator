@@ -9,10 +9,12 @@ import cv2
 from time import strftime
 from time import gmtime
 
+# variables
 directory = creds.user_path
 folderList = []
 fileList = []
 fileCountList = []
+fileBroadcasterList = []
 positiveList = []
 positiveListBrodcaster = []
 positiveListDuration = []
@@ -62,8 +64,21 @@ for a in folderList:
 
         fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
 
+        if b.startswith('1'):
+            variable = b.replace('1', '', 1).strip()
+            addBroadcaster(fileBroadcasterList, variable)
+
+        elif b.startswith('2'):
+            variable = b.replace('2', '', 1).strip()
+            addBroadcaster(fileBroadcasterList, variable)
+
+        else:
+            variable = b.replace('3', '', 1).strip()
+            addBroadcaster(fileBroadcasterList, variable)
+
+
 # create Data-Frame
-data = pd.DataFrame({'Titles': fileList, 'Duration': fileCountList})
+data = pd.DataFrame({'Titles': fileList, 'Duration': fileCountList, 'Broadcaster': fileBroadcasterList})
 
 # write to Excel
 toExcel = pd.ExcelWriter(creds.excel_path, engine='xlsxwriter')
@@ -79,33 +94,38 @@ for index, row in excelTable.iterrows():
     if z.startswith('1'):
         variable = z.replace('1', '', 1).strip()
         positiveList.append(variable.replace('.mp4', ''))
-        addBroadcaster(positiveListBrodcaster, variable)
+        # addBroadcaster(positiveListBrodcaster, variable)
 
         positiveListDuration.append(fileCountList[count])
+        positiveListBrodcaster.append(fileBroadcasterList[count])
         count += 1
 
     elif z.startswith('2'):
         variable = z.replace('2', '', 1).strip()
         negativeList.append(variable.replace('.mp4', ''))
-        addBroadcaster(negativeListBrodcaster, variable)
+        # addBroadcaster(negativeListBrodcaster, variable)
 
         negativeListDuration.append(fileCountList[count])
+        negativeListBrodcaster.append(fileBroadcasterList[count])
         count += 1
 
     else:
         variable = z.replace('3', '', 1).strip()
         neutralList.append(variable.replace('.mp4', ''))
-        addBroadcaster(neutralListBrodcaster, variable)
+        # addBroadcaster(neutralListBrodcaster, variable)
 
         neutralListDuration.append(fileCountList[count])
+        neutralListBrodcaster.append(fileBroadcasterList[count])
         count += 1
 
 
 positiveData = pd.DataFrame({'Positivo': positiveList, 'Duração': positiveListDuration, 'Emissora': positiveListBrodcaster})
 negativeData = pd.DataFrame({'Negativo': negativeList, 'Duração': negativeListDuration, 'Emissora': negativeListBrodcaster})
 neutralData = pd.DataFrame({'Neutro': neutralList, 'Duração': neutralListDuration, 'Emissora': neutralListBrodcaster})
+geral = pd.DataFrame({'Títulos': fileList, 'Duração': fileCountList, 'Emissora': fileBroadcasterList})
 
 with pd.ExcelWriter(creds.excel_path2) as writer:
     positiveData.to_excel(writer, sheet_name='Positivo', index=False)
     negativeData.to_excel(writer, sheet_name='Negativo', index=False)
     neutralData.to_excel(writer, sheet_name='Neutro', index=False)
+    geral.to_excel(writer, sheet_name='Geral', index=False)
