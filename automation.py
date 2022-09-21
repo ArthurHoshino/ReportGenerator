@@ -5,15 +5,26 @@ import os
 import creds
 import pandas as pd
 
+import cv2
+from time import strftime
+from time import gmtime
+
+# variables
 directory = creds.user_path
 folderList = []
 fileList = []
+fileCountList = []
+fileBroadcasterList = []
 positiveList = []
 positiveListBrodcaster = []
+positiveListDuration = []
 negativeList = []
 negativeListBrodcaster = []
+negativeListDuration = []
 neutralList = []
 neutralListBrodcaster = []
+neutralListDuration = []
+count = 0
 
 def addBroadcaster(list: list, broadcaster: str):
     if broadcaster.startswith('SBT'):
@@ -35,24 +46,43 @@ def addBroadcaster(list: list, broadcaster: str):
     else:
         print('No broadscaster found')
 
-
 x = os.chdir(directory)
-folderList.append(os.listdir(x))
+for c in os.listdir(x):
+    folderList.append(c)
 
-for a in folderList[0]:
+for a in folderList:
     y = os.chdir(directory + a)
+    count = 0
 
     for b in os.listdir(y):
         fileList.append(b)
 
+        data = cv2.VideoCapture(directory + a + '\\' + b)
+        frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
+        fps = data.get(cv2.CAP_PROP_FPS)
+        seconds = round(frames / fps)
+
+        fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
+
+        if b.startswith('1'):
+            variable = b.replace('1', '', 1).strip()
+            addBroadcaster(fileBroadcasterList, variable)
+
+        elif b.startswith('2'):
+            variable = b.replace('2', '', 1).strip()
+            addBroadcaster(fileBroadcasterList, variable)
+
+        else:
+            variable = b.replace('3', '', 1).strip()
+            addBroadcaster(fileBroadcasterList, variable)
+
+
 # create Data-Frame
-data = pd.DataFrame({'Titles': fileList})
+data = pd.DataFrame({'Titles': fileList, 'Duration': fileCountList, 'Broadcaster': fileBroadcasterList})
 
 # write to Excel
 toExcel = pd.ExcelWriter(creds.excel_path, engine='xlsxwriter')
-
 data.to_excel(toExcel, sheet_name='Titles', index=False)
-
 toExcel.save()
 
 excelTable = pd.read_excel(creds.excel_path)
@@ -63,22 +93,39 @@ for index, row in excelTable.iterrows():
 
     if z.startswith('1'):
         variable = z.replace('1', '', 1).strip()
-        positiveList.append(variable.replace('.txt', ''))
-        addBroadcaster(positiveListBrodcaster, variable)
+        positiveList.append(variable.replace('.mp4', ''))
+        # addBroadcaster(positiveListBrodcaster, variable)
+
+        positiveListDuration.append(fileCountList[count])
+        positiveListBrodcaster.append(fileBroadcasterList[count])
+        count += 1
+
     elif z.startswith('2'):
         variable = z.replace('2', '', 1).strip()
-        negativeList.append(variable.replace('.txt', ''))
-        addBroadcaster(negativeListBrodcaster, variable)
+        negativeList.append(variable.replace('.mp4', ''))
+        # addBroadcaster(negativeListBrodcaster, variable)
+
+        negativeListDuration.append(fileCountList[count])
+        negativeListBrodcaster.append(fileBroadcasterList[count])
+        count += 1
+
     else:
         variable = z.replace('3', '', 1).strip()
-        neutralList.append(variable.replace('.txt', ''))
-        addBroadcaster(neutralListBrodcaster, variable)
+        neutralList.append(variable.replace('.mp4', ''))
+        # addBroadcaster(neutralListBrodcaster, variable)
 
-positiveData = pd.DataFrame({'Positivo': positiveList, 'Emissora': positiveListBrodcaster})
-negativeData = pd.DataFrame({'Negativo': negativeList, 'Emissora': negativeListBrodcaster})
-neutralData = pd.DataFrame({'Neutro': neutralList, 'Emissora': neutralListBrodcaster})
+        neutralListDuration.append(fileCountList[count])
+        neutralListBrodcaster.append(fileBroadcasterList[count])
+        count += 1
+
+
+positiveData = pd.DataFrame({'Positivo': positiveList, 'Duração': positiveListDuration, 'Emissora': positiveListBrodcaster})
+negativeData = pd.DataFrame({'Negativo': negativeList, 'Duração': negativeListDuration, 'Emissora': negativeListBrodcaster})
+neutralData = pd.DataFrame({'Neutro': neutralList, 'Duração': neutralListDuration, 'Emissora': neutralListBrodcaster})
+geral = pd.DataFrame({'Títulos': fileList, 'Duração': fileCountList, 'Emissora': fileBroadcasterList})
 
 with pd.ExcelWriter(creds.excel_path2) as writer:
     positiveData.to_excel(writer, sheet_name='Positivo', index=False)
     negativeData.to_excel(writer, sheet_name='Negativo', index=False)
     neutralData.to_excel(writer, sheet_name='Neutro', index=False)
+    geral.to_excel(writer, sheet_name='Geral', index=False)
