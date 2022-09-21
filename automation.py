@@ -4,6 +4,9 @@
 import os
 import creds
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import xlsxwriter
 
 import cv2
 from time import strftime
@@ -15,6 +18,7 @@ folderList = []
 fileList = []
 fileCountList = []
 fileBroadcasterList = []
+fileCategoriesList = []
 positiveList = []
 positiveListBrodcaster = []
 positiveListDuration = []
@@ -67,14 +71,17 @@ for a in folderList:
         if b.startswith('1'):
             variable = b.replace('1', '', 1).strip()
             addBroadcaster(fileBroadcasterList, variable)
+            fileCategoriesList.append('Positivo')
 
         elif b.startswith('2'):
             variable = b.replace('2', '', 1).strip()
             addBroadcaster(fileBroadcasterList, variable)
+            fileCategoriesList.append('Negativo')
 
         else:
             variable = b.replace('3', '', 1).strip()
             addBroadcaster(fileBroadcasterList, variable)
+            fileCategoriesList.append('Neutro')
 
 
 # create Data-Frame
@@ -118,14 +125,36 @@ for index, row in excelTable.iterrows():
         neutralListBrodcaster.append(fileBroadcasterList[count])
         count += 1
 
+colors = sns.color_palette('pastel')[0:5]
+labels = ['Positivo', 'Negativo', 'Neutro']
+
+positivo = fileCategoriesList.count('Positivo')
+negativo = fileCategoriesList.count('Negativo')
+neutro = fileCategoriesList.count('Neutro')
+
+tudo = [positivo, negativo, neutro]
+
+plt.pie(tudo, labels=labels, colors=colors, autopct='%.0f%%')
+plt.savefig('teste.png')
+
 
 positiveData = pd.DataFrame({'Positivo': positiveList, 'Duração': positiveListDuration, 'Emissora': positiveListBrodcaster})
 negativeData = pd.DataFrame({'Negativo': negativeList, 'Duração': negativeListDuration, 'Emissora': negativeListBrodcaster})
 neutralData = pd.DataFrame({'Neutro': neutralList, 'Duração': neutralListDuration, 'Emissora': neutralListBrodcaster})
-geral = pd.DataFrame({'Títulos': fileList, 'Duração': fileCountList, 'Emissora': fileBroadcasterList})
+geral = pd.DataFrame({'Títulos': fileList, 'Duração': fileCountList, 'Emissora': fileBroadcasterList, 'Categoria': fileCategoriesList})
+resumo = pd.DataFrame()
 
 with pd.ExcelWriter(creds.excel_path2) as writer:
+    resumo.to_excel(writer, sheet_name='Resumo', index=False)
     positiveData.to_excel(writer, sheet_name='Positivo', index=False)
     negativeData.to_excel(writer, sheet_name='Negativo', index=False)
     neutralData.to_excel(writer, sheet_name='Neutro', index=False)
     geral.to_excel(writer, sheet_name='Geral', index=False)
+
+    worksheetResumo = writer.sheets['Resumo']
+    worksheetResumo.insert_image('A1', 'teste.png')
+
+    worksheet = writer.sheets['Geral']
+    worksheet.set_column('A:A', 40)
+    worksheet.set_column('B:D', 15)
+
