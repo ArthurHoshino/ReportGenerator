@@ -65,46 +65,48 @@ for a in folderList:
     count = 0
 
     for b in os.listdir(y):
-        fileList.append(b)
+        if (b.endswith('.mp4')):
+            fileList.append(b)
+            if b.startswith('1'):
+                variable = b.replace('1', '', 1).strip()
+                addBroadcaster(fileBroadcasterList, variable)
+                fileCategoriesList.append('Positivo')
 
-        if b.startswith('1'):
-            variable = b.replace('1', '', 1).strip()
-            addBroadcaster(fileBroadcasterList, variable)
-            fileCategoriesList.append('Positivo')
+                data = cv2.VideoCapture(directory + a + '\\' + b)
+                frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
+                fps = data.get(cv2.CAP_PROP_FPS)
+                seconds = round(frames / fps)
+                positiveTime += seconds
+                allTime += seconds
+                fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
 
-            data = cv2.VideoCapture(directory + a + '\\' + b)
-            frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
-            fps = data.get(cv2.CAP_PROP_FPS)
-            seconds = round(frames / fps)
-            positiveTime += seconds
-            allTime += seconds
-            fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
+            elif b.startswith('2'):
+                variable = b.replace('2', '', 1).strip()
+                addBroadcaster(fileBroadcasterList, variable)
+                fileCategoriesList.append('Negativo')
 
-        elif b.startswith('2'):
-            variable = b.replace('2', '', 1).strip()
-            addBroadcaster(fileBroadcasterList, variable)
-            fileCategoriesList.append('Negativo')
+                data = cv2.VideoCapture(directory + a + '\\' + b)
+                frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
+                fps = data.get(cv2.CAP_PROP_FPS)
+                seconds = round(frames / fps)
+                negativeTime += seconds
+                allTime += seconds
+                fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
 
-            data = cv2.VideoCapture(directory + a + '\\' + b)
-            frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
-            fps = data.get(cv2.CAP_PROP_FPS)
-            seconds = round(frames / fps)
-            negativeTime += seconds
-            allTime += seconds
-            fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
+            else:
+                variable = b.replace('3', '', 1).strip()
+                addBroadcaster(fileBroadcasterList, variable)
+                fileCategoriesList.append('Neutro')
 
+                data = cv2.VideoCapture(directory + a + '\\' + b)
+                frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
+                fps = data.get(cv2.CAP_PROP_FPS)
+                seconds = round(frames / fps)
+                neutralTime += seconds
+                allTime += seconds
+                fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
         else:
-            variable = b.replace('3', '', 1).strip()
-            addBroadcaster(fileBroadcasterList, variable)
-            fileCategoriesList.append('Neutro')
-
-            data = cv2.VideoCapture(directory + a + '\\' + b)
-            frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
-            fps = data.get(cv2.CAP_PROP_FPS)
-            seconds = round(frames / fps)
-            neutralTime += seconds
-            allTime += seconds
-            fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
+            print('Arquivo não é um vídeo')
 
 
 # create Data-Frame
@@ -169,14 +171,13 @@ with pd.ExcelWriter(creds.excel_path2) as writer:
     neutralData.to_excel(writer, sheet_name='Neutro', index=False)
     geral.to_excel(writer, sheet_name='Geral', index=False)
 
-    worksheet1 = writer.sheets['Positivo']
-    worksheet2 = writer.sheets['Negativo']
-    worksheet3 = writer.sheets['Neutro']
-    worksheet4 = writer.sheets['Geral']
-    worksheet5 = writer.sheets['Resumo']
+    worksheet1 = writer.sheets['Resumo']
+    worksheet2 = writer.sheets['Positivo']
+    worksheet3 = writer.sheets['Negativo']
+    worksheet4 = writer.sheets['Neutro']
+    worksheet5 = writer.sheets['Geral']
     
-    worksheet1.set_column('A:A', 40)
-    worksheet1.set_column('B:D', 15)
+    worksheet1.set_column('A:B', 30)
 
     worksheet2.set_column('A:A', 40)
     worksheet2.set_column('B:D', 15)
@@ -187,4 +188,5 @@ with pd.ExcelWriter(creds.excel_path2) as writer:
     worksheet4.set_column('A:A', 40)
     worksheet4.set_column('B:D', 15)
 
-    worksheet5.set_column('A:B', 30)
+    worksheet5.set_column('A:A', 40)
+    worksheet5.set_column('B:D', 15)
