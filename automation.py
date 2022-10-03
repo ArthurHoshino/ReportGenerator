@@ -4,6 +4,9 @@
 import os
 import creds
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import xlsxwriter
 
 import cv2
 from time import strftime
@@ -15,6 +18,7 @@ folderList = []
 fileList = []
 fileCountList = []
 fileBroadcasterList = []
+fileCategoriesList = []
 positiveList = []
 positiveListBrodcaster = []
 positiveListDuration = []
@@ -24,7 +28,13 @@ negativeListDuration = []
 neutralList = []
 neutralListBrodcaster = []
 neutralListDuration = []
+allInfoNameList = ['Matérias positivas', 'Matérias negativas', 'Matérias neutras', 'Tempo positivo', 'Tempo negativo', 'Tempo neutro', 'Tempo total']
+allInfoCountList = []
 count = 0
+positiveTime = 0
+negativeTime = 0
+neutralTime = 0
+allTime = 0
 
 def addBroadcaster(list: list, broadcaster: str):
     if broadcaster.startswith('SBT'):
@@ -55,26 +65,48 @@ for a in folderList:
     count = 0
 
     for b in os.listdir(y):
-        fileList.append(b)
+        if (b.endswith('.mp4')):
+            fileList.append(b)
+            if b.startswith('1'):
+                variable = b.replace('1', '', 1).strip()
+                addBroadcaster(fileBroadcasterList, variable)
+                fileCategoriesList.append('Positivo')
 
-        data = cv2.VideoCapture(directory + a + '\\' + b)
-        frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
-        fps = data.get(cv2.CAP_PROP_FPS)
-        seconds = round(frames / fps)
+                data = cv2.VideoCapture(directory + a + '\\' + b)
+                frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
+                fps = data.get(cv2.CAP_PROP_FPS)
+                seconds = round(frames / fps)
+                positiveTime += seconds
+                allTime += seconds
+                fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
 
-        fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
+            elif b.startswith('2'):
+                variable = b.replace('2', '', 1).strip()
+                addBroadcaster(fileBroadcasterList, variable)
+                fileCategoriesList.append('Negativo')
 
-        if b.startswith('1'):
-            variable = b.replace('1', '', 1).strip()
-            addBroadcaster(fileBroadcasterList, variable)
+                data = cv2.VideoCapture(directory + a + '\\' + b)
+                frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
+                fps = data.get(cv2.CAP_PROP_FPS)
+                seconds = round(frames / fps)
+                negativeTime += seconds
+                allTime += seconds
+                fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
 
-        elif b.startswith('2'):
-            variable = b.replace('2', '', 1).strip()
-            addBroadcaster(fileBroadcasterList, variable)
+            else:
+                variable = b.replace('3', '', 1).strip()
+                addBroadcaster(fileBroadcasterList, variable)
+                fileCategoriesList.append('Neutro')
 
+                data = cv2.VideoCapture(directory + a + '\\' + b)
+                frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
+                fps = data.get(cv2.CAP_PROP_FPS)
+                seconds = round(frames / fps)
+                neutralTime += seconds
+                allTime += seconds
+                fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
         else:
-            variable = b.replace('3', '', 1).strip()
-            addBroadcaster(fileBroadcasterList, variable)
+            print('Arquivo não é um vídeo')
 
 
 # create Data-Frame
@@ -118,14 +150,43 @@ for index, row in excelTable.iterrows():
         neutralListBrodcaster.append(fileBroadcasterList[count])
         count += 1
 
+allInfoCountList.append(fileCategoriesList.count('Positivo'))
+allInfoCountList.append(fileCategoriesList.count('Negativo'))
+allInfoCountList.append(fileCategoriesList.count('Neutro'))
+allInfoCountList.append(strftime('%H:%M:%S', gmtime(positiveTime)))
+allInfoCountList.append(strftime('%H:%M:%S', gmtime(negativeTime)))
+allInfoCountList.append(strftime('%H:%M:%S', gmtime(neutralTime)))
+allInfoCountList.append(strftime('%H:%M:%S', gmtime(allTime)))
 
 positiveData = pd.DataFrame({'Positivo': positiveList, 'Duração': positiveListDuration, 'Emissora': positiveListBrodcaster})
 negativeData = pd.DataFrame({'Negativo': negativeList, 'Duração': negativeListDuration, 'Emissora': negativeListBrodcaster})
 neutralData = pd.DataFrame({'Neutro': neutralList, 'Duração': neutralListDuration, 'Emissora': neutralListBrodcaster})
 geral = pd.DataFrame({'Títulos': fileList, 'Duração': fileCountList, 'Emissora': fileBroadcasterList})
+resumo = pd.DataFrame({'Tipo': allInfoNameList, 'Info': allInfoCountList})
 
 with pd.ExcelWriter(creds.excel_path2) as writer:
+    resumo.to_excel(writer, sheet_name='Resumo', index=False)
     positiveData.to_excel(writer, sheet_name='Positivo', index=False)
     negativeData.to_excel(writer, sheet_name='Negativo', index=False)
     neutralData.to_excel(writer, sheet_name='Neutro', index=False)
     geral.to_excel(writer, sheet_name='Geral', index=False)
+
+    worksheet1 = writer.sheets['Resumo']
+    worksheet2 = writer.sheets['Positivo']
+    worksheet3 = writer.sheets['Negativo']
+    worksheet4 = writer.sheets['Neutro']
+    worksheet5 = writer.sheets['Geral']
+    
+    worksheet1.set_column('A:B', 30)
+
+    worksheet2.set_column('A:A', 40)
+    worksheet2.set_column('B:D', 15)
+
+    worksheet3.set_column('A:A', 40)
+    worksheet3.set_column('B:D', 15)
+
+    worksheet4.set_column('A:A', 40)
+    worksheet4.set_column('B:D', 15)
+
+    worksheet5.set_column('A:A', 40)
+    worksheet5.set_column('B:D', 15)
