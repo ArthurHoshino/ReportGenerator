@@ -7,7 +7,7 @@ and separates the titles into three categories based on the first character of t
 2 -> negative reports </br>
 3 -> neutral reports </br>
 
-**Dependencies:** pandas and xlsxwriter </br>
+**Dependencies:** pandas, xlsxwriter and opencv-python </br>
 
 **Environment Variables:** </br>
 - user_path -> path to folder containing the files </br>
