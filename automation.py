@@ -4,8 +4,6 @@
 import os
 import creds
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import xlsxwriter
 
 import cv2
@@ -31,10 +29,10 @@ neutralListDuration = []
 allInfoNameList = ['Matérias positivas', 'Matérias negativas', 'Matérias neutras', 'Tempo positivo', 'Tempo negativo', 'Tempo neutro', 'Tempo total']
 allInfoCountList = []
 count = 0
-positiveTime = 0
-negativeTime = 0
-neutralTime = 0
-allTime = 0
+positiveTime = []
+negativeTime = []
+neutralTime = []
+allTime = []
 
 def addBroadcaster(list: list, broadcaster: str):
     if broadcaster.startswith('SBT'):
@@ -56,6 +54,15 @@ def addBroadcaster(list: list, broadcaster: str):
     else:
         print('No broadscaster found')
 
+def getDuration(allCounter: list, listCounter: list, videoName: str):
+    data = cv2.VideoCapture(directory + a + '\\' + videoName)
+    frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
+    fps = data.get(cv2.CAP_PROP_FPS)
+    seconds = round(frames / fps)
+    listCounter.append(seconds)
+    allCounter.append(seconds)
+    fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
+
 x = os.chdir(directory)
 for c in os.listdir(x):
     folderList.append(c)
@@ -70,41 +77,20 @@ for a in folderList:
             if b.startswith('1'):
                 variable = b.replace('1', '', 1).strip()
                 addBroadcaster(fileBroadcasterList, variable)
+                getDuration(allTime, positiveTime, b)
                 fileCategoriesList.append('Positivo')
-
-                data = cv2.VideoCapture(directory + a + '\\' + b)
-                frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
-                fps = data.get(cv2.CAP_PROP_FPS)
-                seconds = round(frames / fps)
-                positiveTime += seconds
-                allTime += seconds
-                fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
 
             elif b.startswith('2'):
                 variable = b.replace('2', '', 1).strip()
                 addBroadcaster(fileBroadcasterList, variable)
+                getDuration(allTime, negativeTime, b)
                 fileCategoriesList.append('Negativo')
-
-                data = cv2.VideoCapture(directory + a + '\\' + b)
-                frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
-                fps = data.get(cv2.CAP_PROP_FPS)
-                seconds = round(frames / fps)
-                negativeTime += seconds
-                allTime += seconds
-                fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
 
             else:
                 variable = b.replace('3', '', 1).strip()
                 addBroadcaster(fileBroadcasterList, variable)
+                getDuration(allTime, neutralTime, b)
                 fileCategoriesList.append('Neutro')
-
-                data = cv2.VideoCapture(directory + a + '\\' + b)
-                frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
-                fps = data.get(cv2.CAP_PROP_FPS)
-                seconds = round(frames / fps)
-                neutralTime += seconds
-                allTime += seconds
-                fileCountList.append(strftime('%H:%M:%S', gmtime(seconds)))
         else:
             print('Arquivo não é um vídeo')
 
@@ -153,10 +139,10 @@ for index, row in excelTable.iterrows():
 allInfoCountList.append(fileCategoriesList.count('Positivo'))
 allInfoCountList.append(fileCategoriesList.count('Negativo'))
 allInfoCountList.append(fileCategoriesList.count('Neutro'))
-allInfoCountList.append(strftime('%H:%M:%S', gmtime(positiveTime)))
-allInfoCountList.append(strftime('%H:%M:%S', gmtime(negativeTime)))
-allInfoCountList.append(strftime('%H:%M:%S', gmtime(neutralTime)))
-allInfoCountList.append(strftime('%H:%M:%S', gmtime(allTime)))
+allInfoCountList.append(strftime('%H:%M:%S', gmtime(sum(positiveTime))))
+allInfoCountList.append(strftime('%H:%M:%S', gmtime(sum(negativeTime))))
+allInfoCountList.append(strftime('%H:%M:%S', gmtime(sum(neutralTime))))
+allInfoCountList.append(strftime('%H:%M:%S', gmtime(sum(allTime))))
 
 positiveData = pd.DataFrame({'Positivo': positiveList, 'Duração': positiveListDuration, 'Emissora': positiveListBrodcaster})
 negativeData = pd.DataFrame({'Negativo': negativeList, 'Duração': negativeListDuration, 'Emissora': negativeListBrodcaster})
